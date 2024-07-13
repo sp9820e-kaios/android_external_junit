@@ -6,6 +6,7 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Vector;
 
+import junit.framework.CtsRecord;
 /**
  * A <code>TestResult</code> collects the results of executing
  * a test case. It is an instance of the Collecting Parameter pattern.
@@ -75,6 +76,8 @@ public class TestResult extends Object {
 	 * Informs the result that a test was completed.
 	 */
 	public void endTest(Test test) {
+        System.out.println("TestResult endThead");
+        CtsRecord.endThread();
 		for (TestListener each : cloneListeners())
 			each.endTest(test);
 	}
@@ -152,6 +155,36 @@ public class TestResult extends Object {
 	 * Informs the result that a test will be started.
 	 */
 	public void startTest(Test test) {
+        String testStr = null;
+        if (test instanceof TestCase) {
+            testStr = ((TestCase)test).toString();
+        } else if (test instanceof TestSuite) {
+            testStr = ((TestSuite)test).toString();
+        }
+        System.out.println("TestResult startTest: "+testStr);
+        if (testStr != null) {
+            String[] testSub = testStr.split("\\(");
+            if(testSub.length == 2) {
+                String[] classSub = testSub[1].split("\\)");
+                //cts case's class name
+                String classStr = classSub[0];
+                //cts case's method name
+                String methodStr = testSub[0];
+                int lastPointChar = classStr.lastIndexOf('.');
+                //cts case's package name
+                String packageStr = classStr.substring(0, lastPointChar);
+                //record cts case's package name
+                CtsRecord.setCtsPackage(packageStr);
+                //record cts case's class name
+                CtsRecord.setCtsClass(classStr);
+                //record cts case's method name
+                CtsRecord.setCtsMethod(methodStr);
+                System.out.println("TestResult startTest package: "+CtsRecord.getCtsPackage()+
+                    " class: "+CtsRecord.getCtsClass()+
+                    " method: "+CtsRecord.getCtsMethod());
+            }
+        }
+
 		final int count= test.countTestCases();
 		synchronized(this) {
 			fRunTests+= count;
